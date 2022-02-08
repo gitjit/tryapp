@@ -4,7 +4,7 @@ using Azure.Storage.Blobs.Models;
 using Azure.Storage.Queues;
 using Microsoft.Extensions.Azure;
 
-string Version = "1.0.0";
+string Version = "1.0.1";
 
 var builder = WebApplication.CreateBuilder(args);
 
