@@ -4,6 +4,8 @@ using Azure.Storage.Blobs.Models;
 using Azure.Storage.Queues;
 using Microsoft.Extensions.Azure;
 
+string Version = "1.0.0";
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -81,6 +83,12 @@ app.MapGet("/blob", async (BlobServiceClient blb, QueueServiceClient q) =>
     return Results.Ok(count);
 })
 .WithName("GetBlob");
+
+app.MapGet("/version", () =>
+{
+    return Results.Ok(Version);
+
+}).WithName("Version");
 
 
 app.Run();
