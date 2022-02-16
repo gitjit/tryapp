@@ -115,7 +115,7 @@ app.MapGet("/cosmos", async (CosmosClient cosmosClient) =>
 {
     try
     {
-        var container = cosmosClient.GetContainer("tryDb", "tries");
+        var container = cosmosClient.GetContainer(cosmosDb, cosmosContainer);
         var payload = new CosmosModel
         {
             Id = Guid.NewGuid().ToString(),
