@@ -14,19 +14,31 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Configuration.AddJsonFile("appsettings.json");
 
-var userAssignedClientId = "7d53794d-edb9-4a1f-b8f6-41f91c2f02ba";
+var blobEndpoint =  builder.Configuration.GetValue<string>("Az:blob_endpoint");
+var queueEndpoint = builder.Configuration.GetValue<string>("Az:queue_endpoint");
+var cosmosEndpoint = builder.Configuration.GetValue<string>("Az:cosmos_ep");
+var logsContainer = builder.Configuration.GetValue<string>("Az:logs_container");
+var sessionsQ = builder.Configuration.GetValue<string>("Az:session_q");
+var crashesQ = builder.Configuration.GetValue<string>("Az:crashes_q");
+var cosmosDb = builder.Configuration.GetValue<string>("Az:cosmos_db");
+var cosmosContainer = builder.Configuration.GetValue<string>("Az:cosmso_container");
+
+
+var userAssignedClientId = builder.Configuration.GetValue<string>("Az:uaid_client_id");
+
 
 builder.Services.AddAzureClients(clientBuilder =>
 {
 
-    clientBuilder.AddBlobServiceClient(new Uri("https://try01storage.blob.core.windows.net"))
+    clientBuilder.AddBlobServiceClient(new Uri(blobEndpoint))
                     .WithCredential(new DefaultAzureCredential(new DefaultAzureCredentialOptions { ManagedIdentityClientId = userAssignedClientId }));
-    clientBuilder.AddQueueServiceClient(new Uri("https://try01storage.queue.core.windows.net"))
+    clientBuilder.AddQueueServiceClient(new Uri(queueEndpoint))
                   .WithCredential(new DefaultAzureCredential(new DefaultAzureCredentialOptions { ManagedIdentityClientId = userAssignedClientId }))
                  .ConfigureOptions(c => c.MessageEncoding = Azure.Storage.Queues.QueueMessageEncoding.Base64);
 });
-var cosmosClient = new CosmosClient("https://try01cosmos.documents.azure.com:443/", new DefaultAzureCredential(new DefaultAzureCredentialOptions { ManagedIdentityClientId = userAssignedClientId }));
+var cosmosClient = new CosmosClient(cosmosEndpoint, new DefaultAzureCredential(new DefaultAzureCredentialOptions { ManagedIdentityClientId = userAssignedClientId }));
 if (cosmosClient == null)
 {
     Console.WriteLine("#### Cosmos Client Failed to Create");
@@ -66,7 +78,7 @@ app.MapGet("/weatherforecast", () =>
 
 app.MapGet("/blob", async (BlobServiceClient blb, QueueServiceClient q) =>
 {
-    var containerClient = blb.GetBlobContainerClient("logs");
+    var containerClient = blb.GetBlobContainerClient(logsContainer);
     BlobClient blobClient = containerClient.GetBlobClient(Guid.NewGuid().ToString());
 
     using (var ms = new MemoryStream())
@@ -86,7 +98,7 @@ app.MapGet("/blob", async (BlobServiceClient blb, QueueServiceClient q) =>
         Console.WriteLine(item.Name);
     }
 
-    var sq = q.GetQueueClient("sessions");
+    var sq = q.GetQueueClient(sessionsQ);
     await sq.SendMessageAsync("a new one " + DateTime.Now.ToString());
 
     return Results.Ok(count);
